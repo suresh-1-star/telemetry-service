@@ -7,7 +7,7 @@ on:
 env:
   AWS_REGION: ap-south-1
   ECR_REPOSITORY: telemetry-api
-  AWS_ACCOUNT_ID: 045064752559
+  AWS_ACCOUNT_ID: "045064752559"
 
 jobs:
   build-push-promote:
