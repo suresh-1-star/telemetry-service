@@ -16,6 +16,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify Secret Injection
+        run: |
+          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
+            echo "Error: AWS_ACCESS_KEY_ID secret is empty or missing!"
+            exit 1
+          else
+            echo "AWS_ACCESS_KEY_ID is populated."
+          fi
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
