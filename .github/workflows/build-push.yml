@@ -12,6 +12,7 @@ env:
   AWS_REGION: ap-south-1
   ECR_REPOSITORY: telemetry-api
   AWS_ACCOUNT_ID: 045064752559
+  ACTIONS_STEP_DEBUG: true
 
 jobs:
   build-push-promote:
