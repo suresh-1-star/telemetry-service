@@ -12,26 +12,28 @@ env:
 jobs:
   build-push-promote:
     runs-on: ubuntu-latest
-    # Uncomment and match your GitHub Environment name if secrets are scoped:
-    # environment: production
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build and push tag v1.0.0
+      - name: Configure and Test AWS Auth
         env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
+          echo "Debug ID length: ${#AWS_ACCESS_KEY_ID}"
+          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
+            echo "CRITICAL: GitHub Actions secret AWS_ACCESS_KEY_ID is empty/unresolved. Check if secrets are restricted to a GitHub Environment."
+            exit 1
+          fi
+          mkdir -p ~/.aws
+          printf "[default]\naws_access_key_id = %s\naws_secret_access_key = %s\n" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials
+          aws sts get-caller-identity
+
+      - name: Login to Amazon ECR & Push
+        env:
+          REGISTRY: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $REGISTRY
           docker build -t $REGISTRY/${{ env.ECR_REPOSITORY }}:v1.0.0 .
           docker push $REGISTRY/${{ env.ECR_REPOSITORY }}:v1.0.0
