@@ -23,7 +23,7 @@ jobs:
         run: |
           echo "Debug ID length: ${#AWS_ACCESS_KEY_ID}"
           if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-            echo "CRITICAL: GitHub Actions secret AWS_ACCESS_KEY_ID is empty/unresolved. Check if secrets are restricted to a GitHub Environment."
+            echo "CRITICAL: GitHub Actions secret AWS_ACCESS_KEY_ID is empty/unresolved."
             exit 1
           fi
           mkdir -p ~/.aws
