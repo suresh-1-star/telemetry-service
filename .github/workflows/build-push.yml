@@ -4,15 +4,10 @@ on:
   push:
     branches: [main]
 
-permissions:
-  id-token: write
-  contents: read
-
 env:
   AWS_REGION: ap-south-1
   ECR_REPOSITORY: telemetry-api
   AWS_ACCOUNT_ID: 045064752559
-  ACTIONS_STEP_DEBUG: true
 
 jobs:
   build-push-promote:
@@ -21,12 +16,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials (OIDC)
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/ci-ecr-push-role
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-          audience: sts.amazonaws.com
 
       - name: Login to Amazon ECR
         id: login-ecr
