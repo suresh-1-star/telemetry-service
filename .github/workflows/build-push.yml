@@ -1,6 +1,16 @@
+name: Build and Push Telemetry API
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
 env:
   AWS_REGION: ap-south-1
-  ECR_REPOSITORY: telemetry-api       # <-- updated from telemetry-service
+  ECR_REPOSITORY: telemetry-api
   AWS_ACCOUNT_ID: 045064752559
 
 jobs:
@@ -13,7 +23,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/ci-ecr-push-role # <-- updated role name
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/ci-ecr-push-role
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
