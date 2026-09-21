@@ -16,24 +16,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure and Test AWS Auth
+      - name: Configure AWS Credentials File
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          echo "Debug ID length: ${#AWS_ACCESS_KEY_ID}"
-          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-            echo "CRITICAL: GitHub Actions secret AWS_ACCESS_KEY_ID is empty/unresolved."
-            exit 1
-          fi
           mkdir -p ~/.aws
           printf "[default]\naws_access_key_id = %s\naws_secret_access_key = %s\n" "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials
           aws sts get-caller-identity
 
-      - name: Login to Amazon ECR & Push
+      - name: Login to Amazon ECR & Push Image
         env:
           REGISTRY: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $REGISTRY
-          docker build -t $REGISTRY/${{ env.ECR_REPOSITORY }}:v1.0.0 .
-          docker push $REGISTRY/${{ env.ECR_REPOSITORY }}:v1.0.0
+          
+          # Build and tag image with Commit SHA and latest
+          docker build -t $REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG -t $REGISTRY/${{ env.ECR_REPOSITORY }}:latest .
+          
+          # Push both tags
+          docker push $REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+          docker push $REGISTRY/${{ env.ECR_REPOSITORY }}:latest
