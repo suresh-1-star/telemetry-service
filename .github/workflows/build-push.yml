@@ -1,0 +1,28 @@
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: telemetry-api       # <-- updated from telemetry-service
+  AWS_ACCOUNT_ID: 045064752559
+
+jobs:
+  build-push-promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/ci-ecr-push-role # <-- updated role name
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push tag v1.0.0
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -t $REGISTRY/${{ env.ECR_REPOSITORY }}:v1.0.0 .
+          docker push $REGISTRY/${{ env.ECR_REPOSITORY }}:v1.0.0
