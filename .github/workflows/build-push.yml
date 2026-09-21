@@ -38,3 +38,28 @@ jobs:
           # Push both tags
           docker push $REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
           docker push $REGISTRY/${{ env.ECR_REPOSITORY }}:latest
+          
+      - name: Update GitOps Manifest Repository
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          GITOPS_PAT: ${{ secrets.GITOPS_PAT }}
+        run: |
+          git clone https://x-access-token:${GITOPS_PAT}@github.com/${{ env.GITOPS_REPO }}.git gitops-repo
+          cd gitops-repo
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          MANIFEST_FILE="Kubernetes/telemetry/deployment.yaml"
+          NEW_IMAGE="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}"
+          
+          sed -i "s|image: .*${{ env.ECR_REPOSITORY }}:.*|image: ${NEW_IMAGE}|g" $MANIFEST_FILE
+          
+          if git status --porcelain | grep -q "$MANIFEST_FILE"; then
+            git add $MANIFEST_FILE
+            git commit -m "chore(telemetry): promote image tag to ${IMAGE_TAG}"
+            git push origin main
+            echo "Successfully promoted image tag ${IMAGE_TAG} to GitOps repository."
+          else
+            echo "No manifest changes detected."
+          fi    
