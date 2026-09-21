@@ -37,12 +37,13 @@ jobs:
           
           # Push both tags
           docker push $REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
-          docker push $REGISTRY/${{ env.ECR_REPOSITORY }}:latest
-          
+          docker push $REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+
       - name: Update GitOps Manifest Repository
         env:
           IMAGE_TAG: ${{ github.sha }}
           GITOPS_PAT: ${{ secrets.GITOPS_PAT }}
+          GITOPS_REPO: "suresh-1-star/eks-gitops-manifests"
         run: |
           git clone https://x-access-token:${GITOPS_PAT}@github.com/${{ env.GITOPS_REPO }}.git gitops-repo
           cd gitops-repo
